@@ -141,26 +141,38 @@ async def get_products(recommended_ids: str = None):
                 size(relevant_products) as num_relevant,
                 size([x IN pagerank_recs WHERE x IN relevant_products]) as true_positives
             """
-            metrics_result = neo4j.query(metrics_query, {
+            metrics_results = neo4j.query(metrics_query, {
                 "pagerank_ids": [r["product_id"] for r in pagerank_results]
-            })[0]
+            })
 
-            num_recommendations = metrics_result['num_recommendations']
-            num_relevant = metrics_result['num_relevant']
-            true_positives = metrics_result['true_positives']
+            # Check if we got results
+            if metrics_results and len(metrics_results) > 0:
+                metrics_result = metrics_results[0]
+                num_recommendations = metrics_result['num_recommendations']
+                num_relevant = metrics_result['num_relevant']
+                true_positives = metrics_result['true_positives']
 
-            precision = true_positives / num_recommendations if num_recommendations > 0 else 0
-            recall = true_positives / num_relevant if num_relevant > 0 else 0
-            f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+                precision = true_positives / num_recommendations if num_recommendations > 0 else 0
+                recall = true_positives / num_relevant if num_relevant > 0 else 0
+                f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
 
-            metrics = {
-                "precision": precision,
-                "recall": recall,
-                "f1_score": f1_score,
-                "num_recommendations": num_recommendations,
-                "num_relevant": num_relevant,
-                "true_positives": true_positives
-            }
+                metrics = {
+                    "precision": precision,
+                    "recall": recall,
+                    "f1_score": f1_score,
+                    "num_recommendations": num_recommendations,
+                    "num_relevant": num_relevant,
+                    "true_positives": true_positives
+                }
+            else:
+                metrics = {
+                    "precision": 0,
+                    "recall": 0,
+                    "f1_score": 0,
+                    "num_recommendations": 0,
+                    "num_relevant": 0,
+                    "true_positives": 0
+                }
         else:
             metrics = None
 
