@@ -2,6 +2,9 @@
 
 A knowledge graph-based product recommendation system that combines AI-driven recommendations, PageRank algorithm, and natural language processing to provide personalized product recommendations.
 
+https://github.com/user-attachments/assets/a796a815-5ca5-46dc-a49c-96b3c1641f7a
+
+
 ## Dataset
 
 The system uses the [Fashion Clothing Products Catalog](https://www.kaggle.com/datasets/shivamb/fashion-clothing-products-catalog) from Kaggle. This comprehensive dataset includes:
@@ -59,19 +62,12 @@ Nodes represent products, with edges representing similarities. Edge weights are
 - OpenAI API key
 - Kaggle account (to download dataset)
 
-### Data Preparation
-1. Download Fashion Clothing Products Catalog from Kaggle
-2. Preprocess and import data into Neo4j
-   ```bash
-   python scripts/data_import.py
-   ```
-
 ### Backend Setup
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
-   cd product-recommender
+   git clone https://github.com/rcisneros99/AIKnowledgeGraph
+   cd AIKnowledgeGraph
    ```
 
 2. Create virtual environment:
@@ -92,10 +88,17 @@ Nodes represent products, with edges representing similarities. Edge weights are
    NEO4J_PASSWORD=your_password
    OPENAI_API_KEY=your_openai_key
    ```
+5. Start the Neo4j Database
+   ```
+   neo4j start
+   neo4j-admin set-initial-password your_password
+   neo4j-admin dbms set-initial-password your_password
+   ```
 
-5. Start backend:
+5. Start backend (Neo4j database):
    ```bash
-   uvicorn app.main:app --reload
+   cd backend
+   uvicorn app.main:app --reload --port 8000
    ```
 
 ### Frontend Setup
@@ -119,13 +122,13 @@ Nodes represent products, with edges representing similarities. Edge weights are
 
 ### Neo4j Browser Visualization
 
-1. Open Neo4j Desktop or Neo4j Browser
-2. Connect to your local database
+1. Open Neo4j Desktop or Neo4j Browser (Most probably in http://localhost:7474/browser/)
+2. Connect to your local database with your Username and Password
 3. Use Cypher queries to explore the graph:
 
    ```cypher
    // View all product nodes
-   MATCH (p:Product) RETURN p LIMIT 25
+   MATCH (p:Product) RETURN p LIMIT 100
 
    // Find products by brand
    MATCH (p:Product {brand: 'Nike'}) RETURN p
