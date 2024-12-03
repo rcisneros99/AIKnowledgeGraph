@@ -6,24 +6,29 @@ from .database import Neo4jConnection
 from .graph_builder import GraphBuilder
 from .rag import RAGAgent
 
+# Setting up FastAPI - this is going to be our main server
 app = FastAPI()
 
-# Add CORS middleware
+# Adding CORS middleware - needed so our React frontend can talk to the backend
+# This took me forever to figure out!
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Not super secure but works for development
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Setting up all our connections - Neo4j for the graph database and our recommendation tools
 neo4j = Neo4jConnection()
 graph_builder = GraphBuilder()
 rag_agent = RAGAgent()
 
+# This is how our chat messages should look - keeping it simple
 class ChatMessage(BaseModel):
     message: str
 
+# Product class - all the info we need about each product
 class Product(BaseModel):
     product_id: str
     name: str
@@ -32,12 +37,14 @@ class Product(BaseModel):
     price: float
     color: str
     pagerank: float
-    recommendation_type: str = 'other'
+    recommendation_type: str = 'other'  # Starting with 'other' as default
 
+# This runs when we start the server - builds our awesome knowledge graph
 @app.on_event("startup")
 async def startup_event():
-    # Build knowledge graph on startup
+    # First build the graph from our dataset
     graph_builder.build_knowledge_graph("data/myntra.csv")
+    # Then calculate PageRank scores for all products
     graph_builder.calculate_pagerank()
 
 @app.get("/products/")

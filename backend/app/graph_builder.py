@@ -9,6 +9,8 @@ class GraphBuilder:
         self.neo4j = Neo4jConnection()
 
     def create_relationships_batch(self, session, batch_ids):
+        # Creating connections between products - this is where the magic happens!
+        # We look at brand, gender, color, and price to figure out which products are similar
         session.run("""
             MATCH (p1:Product)
             WHERE p1.product_id IN $batch_ids
@@ -39,23 +41,24 @@ class GraphBuilder:
         """, {'batch_ids': batch_ids})
 
     def build_knowledge_graph(self, csv_path):
+        # Time to build our knowledge graph! This is going to be fun
         df = pd.read_csv('data/myntra.csv', low_memory=False)
-        print(f"Loaded {len(df)} products from CSV")
+        print(f"Loaded {len(df)} products from CSV - that's a lot of data!")
         
-        batch_size = 100
+        batch_size = 100  # Processing in batches to not overwhelm Neo4j
         product_batches = [df[i:i + batch_size] for i in range(0, len(df), batch_size)]
         
         with self.neo4j.driver.session() as session:
-            # Clear existing data
+            # First, clear out any old data - fresh start!
             session.run("MATCH (n) DETACH DELETE n")
             print("Cleared existing data from Neo4j")
             
-            # Create indices
+            # Creating indices to make our queries faster
             session.run("CREATE INDEX product_id IF NOT EXISTS FOR (p:Product) ON (p.product_id)")
             session.run("CREATE INDEX brand IF NOT EXISTS FOR (p:Product) ON (p.brand)")
             session.run("CREATE INDEX gender IF NOT EXISTS FOR (p:Product) ON (p.gender)")
             session.run("CREATE INDEX color IF NOT EXISTS FOR (p:Product) ON (p.color)")
-            print("Created indices")
+            print("Created indices - our queries should be super fast now")
             
             print(f"Processing {len(product_batches)} batches...")
             
@@ -123,15 +126,19 @@ class GraphBuilder:
                     })
 
     def calculate_pagerank(self):
+        # Now for the cool part - calculating PageRank scores for our products!
+        # This helps us find the most important products in our graph
         print("Starting PageRank calculation...")
-        # First, set default pagerank for all products
+        
+        # Give everyone a starting score - everyone gets a chance!
         with self.neo4j.driver.session() as session:
             session.run("""
                 MATCH (p:Product)
                 SET p.pagerank = 0.15  // Default value
             """)
 
-        # Get the graph structure with weights
+        # Getting all the connections between products
+        # We'll use this to figure out which products are more important
         query = """
         MATCH (p1:Product)-[r:SIMILAR_TO]->(p2:Product)
         WITH p1, p2, r
